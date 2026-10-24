@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>自炊レシピ帳</title>
+<meta name="description" content="一人暮らしの自炊レシピ帳">
+<meta name="theme-color" content="#F4F5F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141A13" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="レシピ帳">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{
+  --bg:#F4F5F0; --surface:#FFFFFF; --ink:#1C2419; --sub:#56604F; --line:#DDE1D5;
+  --green:#2F5E2B; --green-soft:#E3EBDD; --mustard:#E7B04A; --mustard-soft:#FBEFD2; --on-green:#FFFFFF;
+  --radius:14px;
+  --sans:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;
+  --serif:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#141A13; --surface:#1D251C; --ink:#E8ECE3; --sub:#A3AD9B; --line:#2E392C;
+    --green:#8DBF7F; --green-soft:#24331F; --mustard:#E7B04A; --mustard-soft:#3A3020; --on-green:#10170F; }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.75;
+  padding-bottom:calc(32px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--mustard);outline-offset:2px;border-radius:6px}
+
+/* header */
+header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+  padding:calc(env(safe-area-inset-top) + 10px) 16px 0}
+.top{display:flex;align-items:center;gap:10px;max-width:720px;margin:0 auto}
+h1{font-family:var(--serif);font-weight:600;font-size:21px;letter-spacing:.08em;margin:0;flex:1;white-space:nowrap}
+.wake{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);
+  border-radius:999px;padding:6px 12px;font-size:13px;min-height:36px;cursor:pointer}
+.wake .dot{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.wake[aria-pressed="true"]{border-color:var(--green);color:var(--green)}
+.wake[aria-pressed="true"] .dot{background:var(--green)}
+.search{max-width:720px;margin:10px auto 0;position:relative}
+.search input{width:100%;font:inherit;font-size:16px;padding:10px 40px 10px 38px;border-radius:12px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);-webkit-appearance:none;appearance:none}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;stroke:var(--sub)}
+.search .clear{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:none;
+  width:36px;height:36px;color:var(--sub);cursor:pointer;display:none;font-size:20px;line-height:1}
+.search.has .clear{display:block}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;max-width:720px;margin:6px auto 0;
+  scroll-snap-type:x proximity}
+nav.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:0;background:none;padding:10px 12px 11px;font-size:15px;color:var(--sub);cursor:pointer;
+  border-bottom:3px solid transparent;scroll-snap-align:start;min-height:44px}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--green)}
+.tab.ref{margin-left:auto}
+
+main{max-width:720px;margin:0 auto;padding:16px}
+
+/* tag filter */
+.tags-label{display:block;font-size:12px;color:var(--sub);letter-spacing:.06em;margin:0 0 4px}
+.tags{display:flex;gap:6px;margin:0 -16px 14px;padding:2px 16px 4px;overflow-x:auto;scrollbar-width:none}
+.tags::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:14px;
+  cursor:pointer;min-height:34px}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
+
+.intro{color:var(--sub);font-size:15px;margin:0 0 14px}
+.intro p{margin:0 0 8px}
+.intro ul{margin:0 0 8px;padding-left:1.2em}
+
+/* cards */
+.card{scroll-margin-top:180px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin:0 0 10px;overflow:hidden}
+.card>button.head{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;
+  padding:14px 16px;cursor:pointer;min-height:56px}
+.head .title{flex:1;font-weight:600;font-size:17px;line-height:1.45}
+.head .cat{display:block;font-size:12px;font-weight:400;color:var(--sub)}
+.time{flex:none;font-size:13px;font-variant-numeric:tabular-nums;color:var(--green);background:var(--green-soft);
+  border-radius:999px;padding:2px 10px}
+.badge{flex:none;font-size:12px;color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+.chev{flex:none;width:18px;height:18px;stroke:var(--sub);transition:transform .2s ease}
+.card.open .chev{transform:rotate(180deg)}
+.body{display:none;padding:0 16px 16px;border-top:1px dashed var(--line)}
+.card.open .body{display:block}
+.body p{margin:12px 0 0}
+.body ul,.body ol{margin:12px 0 0;padding-left:1.4em}
+.body li{margin:4px 0}
+.body ol li::marker{color:var(--green);font-weight:700}
+.body .lead{font-size:15px;color:var(--sub)}
+
+/* signature: 分量・時間のマーカー */
+.q{background:linear-gradient(transparent 58%,var(--mustard-soft) 58%);font-weight:600;
+  font-variant-numeric:tabular-nums;white-space:nowrap;padding:0 1px}
+@media (prefers-color-scheme: dark){ .q{background:linear-gradient(transparent 55%,var(--mustard-soft) 55%);color:#F3D9A0} }
+
+table{border-collapse:collapse;width:100%;margin:12px 0 0;font-size:15px}
+th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+th{font-size:13px;color:var(--sub);font-weight:600}
+.tablewrap{overflow-x:auto}
+
+.empty{text-align:center;color:var(--sub);padding:40px 0}
+footer{max-width:720px;margin:24px auto 0;padding:0 16px;font-size:12px;color:var(--sub);text-align:center}
+a{color:var(--green)}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>自炊レシピ帳</h1>
+    <button class="wake" id="wake" aria-pressed="false" hidden><span class="dot"></span><span id="wakeLabel">画面を消さない</span></button>
+  </div>
+  <div class="search" id="searchBox">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="料理名・食材で探す" aria-label="レシピを検索" autocomplete="off">
+    <button class="clear" id="clear" aria-label="検索語を消す">×</button>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="カテゴリ"></nav>
+</header>
+<main id="main"></main>
+<footer id="foot"></footer>
+
+<script>
+const DATA = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// 分量・時間をマーカーで強調する(料理中に数字だけ目で拾えるように)
+const QTY = /(大さじ|小さじ)\s?[\d.\/〜]+|[\d.\/]+(?:〜[\d.\/]+)?\s?(?:ml|g|kg|cm|mm|分|秒|本|個|枚|切れ|玉|合|リットル)|ひとつまみ|ひとつかみ|少々/g;
+function inline(s){
+  let h = esc(s);
+  h = h.replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  h = h.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, a, b) => b || a);
+  h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  return h.replace(QTY, (m) => `<span class="q">${m}</span>`);
+}
+function blocks(bs){
+  return bs.map((b, i) => {
+    if (b.t === "p") return `<p>${inline(b.text)}</p>`;
+    if (b.t === "ul") return `<ul>${b.items.map((x) => `<li>${inline(x)}</li>`).join("")}</ul>`;
+    if (b.t === "ol") return `<ol>${b.items.map((x) => `<li>${inline(x)}</li>`).join("")}</ol>`;
+    return `<div class="tablewrap"><table><thead><tr>${b.head.map((x) => `<th>${inline(x)}</th>`).join("")}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((x) => `<td>${inline(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  }).join("");
+}
+const textOf = (r) => [r.title, ...r.badges, ...r.tags, ...r.blocks.map((b) => b.text || (b.items || []).join(" ") || [b.head, ...(b.rows || [])].flat().join(" "))].join(" ");
+
+const state = { cat: DATA.categories[0].id, q: "", tags: new Set(), open: new Set() };
+const store = { get(k){ try { return localStorage.getItem(k); } catch { return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch {} } };
+const savedCat = store.get("jisui.cat");
+if (savedCat && DATA.categories.some((c) => c.id === savedCat)) state.cat = savedCat;
+
+// 直リンク: #gohan-2 のようなハッシュで該当レシピを開く
+function fromHash(){
+  const id = decodeURIComponent(location.hash.slice(1));
+  const cat = DATA.categories.find((c) => c.recipes.some((r) => r.id === id));
+  if (cat){ state.cat = cat.id; state.q = ""; state.tags.clear(); state.open.add(id); return id; }
+  return null;
+}
+
+function renderTabs(){
+  requestAnimationFrame(() => $('.tab[aria-selected="true"]')?.scrollIntoView({ inline: "nearest", block: "nearest" }));
+  $("#tabs").innerHTML = DATA.categories.map((c) =>
+    `<button class="tab${c.reference ? " ref" : ""}" role="tab" data-cat="${c.id}" aria-selected="${!searching() && c.id === state.cat}">${c.short}</button>`).join("");
+}
+const searching = () => state.q.trim() !== "" || state.tags.size > 0;
+
+function card(r, catName){
+  const open = state.open.has(r.id);
+  return `<article class="card${open ? " open" : ""}" id="${r.id}">
+    <button class="head" aria-expanded="${open}" aria-controls="b-${r.id}" data-id="${r.id}">
+      <span class="title">${catName ? `<span class="cat">${esc(catName)}</span>` : ""}${esc(r.title)}</span>
+      ${r.badges.map((b) => `<span class="badge">${esc(b)}</span>`).join("")}
+      ${r.time ? `<span class="time">${r.time}</span>` : ""}
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="body" id="b-${r.id}">${r.blocks.length ? blocks(r.blocks) : '<p class="lead">手順の記載なし</p>'}</div>
+  </article>`;
+}
+
+function render(){
+  renderTabs();
+  const main = $("#main");
+  const tagBar = `<span class="tags-label">食材で絞る${state.tags.size ? `(${[...state.tags].join("・")})` : ""}</span><div class="tags" id="tagbar">${DATA.tags.map((t) =>
+    `<button class="chip" data-tag="${t}" aria-pressed="${state.tags.has(t)}">${t}</button>`).join("")}</div>`;
+  if (searching()){
+    const words = state.q.trim().split(/\s+/).filter(Boolean);
+    const hits = [];
+    for (const c of DATA.categories){
+      if (c.reference) continue;
+      for (const r of c.recipes){
+        const t = textOf(r);
+        if (words.every((w) => t.includes(w)) && [...state.tags].every((g) => r.tags.includes(g))) hits.push(card(r, c.short));
+      }
+    }
+    main.innerHTML = tagBar + (hits.length ? hits.join("") :
+      `<p class="empty">該当するレシピがありません。<br>食材の絞り込みを減らすか、別の言葉で探してください。</p>`);
+    return;
+  }
+  const c = DATA.categories.find((x) => x.id === state.cat);
+  main.innerHTML = (c.reference ? "" : tagBar) +
+    (c.intro.length ? `<div class="intro">${blocks(c.intro)}</div>` : "") +
+    c.recipes.map((r) => card(r)).join("");
+}
+
+$("#tabs").addEventListener("click", (e) => {
+  const b = e.target.closest(".tab"); if (!b) return;
+  state.cat = b.dataset.cat; state.q = ""; state.tags.clear(); $("#q").value = ""; $("#searchBox").classList.remove("has");
+  store.set("jisui.cat", state.cat); history.replaceState(null, "", location.pathname);
+  render(); window.scrollTo({ top: 0 });
+  b.scrollIntoView({ inline: "nearest", block: "nearest" });
+});
+$("#main").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (chip){ const t = chip.dataset.tag, x = $("#tagbar").scrollLeft; state.tags.has(t) ? state.tags.delete(t) : state.tags.add(t); render(); $("#tagbar").scrollLeft = x; return; }
+  const head = e.target.closest("button.head"); if (!head) return;
+  const id = head.dataset.id, art = head.parentElement;
+  const open = !state.open.has(id);
+  open ? state.open.add(id) : state.open.delete(id);
+  art.classList.toggle("open", open); head.setAttribute("aria-expanded", open);
+  if (open) history.replaceState(null, "", "#" + id);
+});
+$("#q").addEventListener("input", (e) => {
+  state.q = e.target.value; $("#searchBox").classList.toggle("has", state.q !== ""); render();
+});
+$("#clear").addEventListener("click", () => {
+  $("#q").value = ""; state.q = ""; $("#searchBox").classList.remove("has"); render(); $("#q").focus();
+});
+
+// 調理中に画面が消えないようにする(Screen Wake Lock API。iOS 16.4以降)
+let lock = null;
+if ("wakeLock" in navigator){
+  const btn = $("#wake"); btn.hidden = false;
+  const set = (on) => { btn.setAttribute("aria-pressed", on); $("#wakeLabel").textContent = on ? "画面オン中" : "画面を消さない"; };
+  const acquire = async () => { try { lock = await navigator.wakeLock.request("screen"); set(true); lock.addEventListener("release", () => { if (!want) set(false); }); } catch { set(false); } };
+  let want = false;
+  btn.addEventListener("click", async () => { want = !want; if (want) await acquire(); else { await lock?.release(); lock = null; set(false); } });
+  document.addEventListener("visibilitychange", () => { if (want && document.visibilityState === "visible") acquire(); });
+}
+
+$("#foot").innerHTML = `元データ: Obsidian 自炊/レシピ帳.md(${DATA.source_updated} 更新)・生成 ${DATA.built}`;
+const target = fromHash();
+render();
+if (target) requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView({ block: "start" }));
+window.addEventListener("hashchange", () => { const t = fromHash(); if (t){ render(); document.getElementById(t)?.scrollIntoView({ block: "start" }); } });
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js?v=__VER__").catch(() => {});
+</script>
+</body>
+</html>
