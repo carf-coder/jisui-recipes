@@ -1,5 +1,5 @@
 // 自炊レシピ帳 service worker。HTMLはネットワーク優先(更新が即届く)、失敗時はキャッシュ(オフライン)。
-const VER = "ff20e83529";
+const VER = "60e0e96c75";
 const CACHE = "jisui-" + VER;
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"];
 
